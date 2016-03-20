@@ -19,6 +19,9 @@ package com.navercorp.pinpoint.plugin.metamx.netty.httpclient.interceptor;
  */
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
+import com.fasterxml.jackson.jaxrs.smile.SmileMediaTypes;
 import com.google.common.collect.Multimap;
 import com.navercorp.pinpoint.bootstrap.context.*;
 import com.navercorp.pinpoint.bootstrap.interceptor.AroundInterceptor1;
@@ -29,8 +32,9 @@ import com.navercorp.pinpoint.bootstrap.util.InterceptorUtils;
 import com.navercorp.pinpoint.common.trace.AnnotationKey;
 import com.navercorp.pinpoint.plugin.metamx.netty.httpclient.MetamxNettyHttpClientConstants;
 import org.jboss.netty.handler.codec.http.HttpMethod;
-
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import java.net.URL;
+import java.util.Collection;
 
 /**
  *
@@ -41,6 +45,8 @@ public class SendRequestInterceptor implements AroundInterceptor1 {
     private PLogger logger = PLoggerFactory.getLogger(this.getClass());
     private final MethodDescriptor descriptor;
     private final TraceContext traceContext;
+    public static final String APPLICATION_JSON = "application/json";
+    private static ObjectMapper smileMapper = new ObjectMapper( new SmileFactory());
 
     public SendRequestInterceptor(TraceContext traceContext, MethodDescriptor descriptor) {
         this.descriptor = descriptor;
@@ -111,7 +117,27 @@ public class SendRequestInterceptor implements AroundInterceptor1 {
                 recorder.recordEndPoint(serverAddress + ":" + port);
                 String entityString = null;
                 if( request.getMethod().equals(HttpMethod.POST)) {
-                    entityString = new String(request.getContent().array());
+                    Collection<String> strs = request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE);
+                    String contentType = null;
+                    for(String s : strs) {
+                        contentType = s;
+                    }
+                    byte[] bytes = request.getContent().array();
+                    if( SmileMediaTypes.APPLICATION_JACKSON_SMILE.equals(contentType)){
+                        try {
+                            entityString = smileMapper.readTree(bytes).toString();
+                        }catch(Exception e){
+                            if(logger.isDebugEnabled()){
+                                logger.error("error", e);
+                            }
+                            entityString = "parse BSON error!";
+                        }
+                    }else if( APPLICATION_JSON.equals(contentType) ||
+                            contentType != null && contentType.toLowerCase().contains("text")){
+                        entityString = new String(bytes);
+                    }else{
+                        entityString = new String(bytes);
+                    }
                 }
                 if( entityString != null) {
                     recorder.recordAttribute(AnnotationKey.HTTP_PARAM_ENTITY, entityString);

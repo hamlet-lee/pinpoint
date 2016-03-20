@@ -84,7 +84,10 @@ import static com.navercorp.pinpoint.bootstrap.plugin.test.Expectations.event;
 @JvmVersion({7,8})
 @Dependency({ "io.netty:netty:3.10.4.Final",
         "com.metamx:http-client:1.0.4",
-        "log4j:log4j:[1.2.16]"})
+        "log4j:log4j:[1.2.16]",
+        "com.fasterxml.jackson.jaxrs:jackson-jaxrs-smile-provider:2.4.6",
+        "com.fasterxml.jackson.core:jackson-databind:2.4.6",
+        "javax.ws.rs:jsr311-api:1.1.1"})
 public class MetamxNettyHttpClientIT {
     private Lifecycle lifeCycle;
     @Before
@@ -314,7 +317,9 @@ public class MetamxNettyHttpClientIT {
                 getResponseHandler()
         );
 
-        future.get();
+        try {
+            future.get();
+        }catch(Throwable e){}
 
         Method go = com.metamx.http.client.NettyHttpClient.class.getMethod("go",
                 com.metamx.http.client.Request.class,
@@ -343,7 +348,7 @@ public class MetamxNettyHttpClientIT {
 
         try {
             future.get();
-        }catch(org.jboss.netty.channel.ChannelException e){
+        }catch(Throwable e){
             // Channel disconnected
         }
 
@@ -358,5 +363,37 @@ public class MetamxNettyHttpClientIT {
         verifier.verifyTraceCount(1);
         verifier.verifyTrace(event("METAMX-HTTP", go, annotation("http.url", "http://www.baidu.com/"),
                 annotation("http.entity", "hello")));
+    }
+
+    @Test
+    public void testBson() throws Exception {
+        String url = "http://www.baidu.com/";
+        HttpClient httpClient = get();
+
+
+        byte[] bsonBytes = new byte[]{58, 41, 10, 5, -6, -5};
+        ListenableFuture<InputStream> future = httpClient.go(new Request(
+                        HttpMethod.POST,
+                    new URL(url)).setContent(bsonBytes).setHeader("Content-Type", "application/x-jackson-smile"),
+                getResponseHandler()
+        );
+
+        try {
+            future.get();
+        }catch(Throwable e){
+            // Channel disconnected
+        }
+
+        Method go = com.metamx.http.client.NettyHttpClient.class.getMethod("go",
+                com.metamx.http.client.Request.class,
+                com.metamx.http.client.response.HttpResponseHandler.class,
+                org.joda.time.Duration.class);
+
+        PluginTestVerifier verifier = PluginTestVerifierHolder.getInstance();
+        verifier.printCache();
+
+        verifier.verifyTraceCount(1);
+        verifier.verifyTrace(event("METAMX-HTTP", go, annotation("http.url", "http://www.baidu.com/"),
+                annotation("http.entity", "{}")));
     }
 }
