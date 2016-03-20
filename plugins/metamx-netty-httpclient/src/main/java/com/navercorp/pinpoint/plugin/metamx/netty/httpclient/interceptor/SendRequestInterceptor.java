@@ -85,6 +85,46 @@ public class SendRequestInterceptor implements AroundInterceptor1 {
             headers.put(Header.HTTP_PARENT_APPLICATION_TYPE.toString(), Short.toString(traceContext.getServerTypeCode()));
             headers.put(Header.HTTP_PARENT_APPLICATION_NAME.toString(), traceContext.getApplicationName());
             headers.put(Header.HTTP_FLAGS.toString(), Short.toString(nextId.getFlags()));
+
+
+            URL url = request.getUrl();
+            int port = url.getPort();
+            String serverAddress = url.getHost();
+            recorder.recordAttribute(AnnotationKey.HTTP_URL, url);
+            String endpoint = serverAddress + ":" + port;
+
+            //need this to build map?
+            headers.put(Header.HTTP_HOST.toString(), endpoint);
+
+            recorder.recordDestinationId(endpoint);
+            recorder.recordEndPoint(endpoint);
+            String entityString = null;
+            if( request.getMethod().equals(HttpMethod.POST)) {
+                Collection<String> strs = request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE);
+                String contentType = null;
+                for(String s : strs) {
+                    contentType = s;
+                }
+                byte[] bytes = request.getContent().array();
+                if( SmileMediaTypes.APPLICATION_JACKSON_SMILE.equals(contentType)){
+                    try {
+                        entityString = smileMapper.readTree(bytes).toString();
+                    }catch(Exception e){
+                        if(logger.isDebugEnabled()){
+                            logger.error("error", e);
+                        }
+                        entityString = "parse BSON error!";
+                    }
+                }else if( APPLICATION_JSON.equals(contentType) ||
+                        contentType != null && contentType.toLowerCase().contains("text")){
+                    entityString = new String(bytes);
+                }else{
+                    entityString = new String(bytes);
+                }
+            }
+            if( entityString != null) {
+                recorder.recordAttribute(AnnotationKey.HTTP_PARAM_ENTITY, entityString);
+            }
         } else {
             // If sampling this transaction is disabled, pass only that infomation to the server.
             headers.put(Header.HTTP_SAMPLED.toString(), "1");
@@ -108,40 +148,6 @@ public class SendRequestInterceptor implements AroundInterceptor1 {
 
             if (throwable == null) {
                 // RPC client have to record end point (server address)
-
-                Request request = (Request) arg0;
-                URL url = request.getUrl();
-                int port = url.getPort();
-                String serverAddress = url.getHost();
-                recorder.recordAttribute(AnnotationKey.HTTP_URL, url);
-                recorder.recordEndPoint(serverAddress + ":" + port);
-                String entityString = null;
-                if( request.getMethod().equals(HttpMethod.POST)) {
-                    Collection<String> strs = request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE);
-                    String contentType = null;
-                    for(String s : strs) {
-                        contentType = s;
-                    }
-                    byte[] bytes = request.getContent().array();
-                    if( SmileMediaTypes.APPLICATION_JACKSON_SMILE.equals(contentType)){
-                        try {
-                            entityString = smileMapper.readTree(bytes).toString();
-                        }catch(Exception e){
-                            if(logger.isDebugEnabled()){
-                                logger.error("error", e);
-                            }
-                            entityString = "parse BSON error!";
-                        }
-                    }else if( APPLICATION_JSON.equals(contentType) ||
-                            contentType != null && contentType.toLowerCase().contains("text")){
-                        entityString = new String(bytes);
-                    }else{
-                        entityString = new String(bytes);
-                    }
-                }
-                if( entityString != null) {
-                    recorder.recordAttribute(AnnotationKey.HTTP_PARAM_ENTITY, entityString);
-                }
             } else {
                 recorder.recordException(throwable);
             }
