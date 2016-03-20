@@ -41,6 +41,7 @@
         <module>log4j</module>
         <module>logback</module>
         <module>dubbo</module>
+        <module>metamx-netty-httpclient</module>
     </modules>
 
     <dependencies>
@@ -189,7 +190,12 @@
             <artifactId>pinpoint-dubbo-plugin</artifactId>
             <version>${project.version}</version>
         </dependency>
-    </dependencies>
+        <dependency>
+            <groupId>com.navercorp.pinpoint</groupId>
+            <artifactId>pinpoint-metamx-netty-httpclient-plugin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+     </dependencies>
 
     <build>
         <plugins>
