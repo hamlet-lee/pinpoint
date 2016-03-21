@@ -14,10 +14,7 @@ package com.navercorp.pinpoint.plugin.metamx.netty.httpclient;
  * limitations under the License.
  */
 
-import com.navercorp.pinpoint.common.trace.AnnotationKey;
-import com.navercorp.pinpoint.common.trace.AnnotationKeyMatchers;
-import com.navercorp.pinpoint.common.trace.TraceMetadataProvider;
-import com.navercorp.pinpoint.common.trace.TraceMetadataSetupContext;
+import com.navercorp.pinpoint.common.trace.*;
 
 /**
  * @author hamlet-lee
@@ -29,7 +26,8 @@ public class MetamxNettyHttpClientTypeProvider implements TraceMetadataProvider 
     public void setup(TraceMetadataSetupContext context) {
         context.addServiceType(
                 MetamxNettyHttpClientConstants.SERVICE_TYPE,
-                AnnotationKeyMatchers.exact(AnnotationKey.HTTP_URL));
+                AnnotationKeyMatchers.exact(AnnotationKey.HTTP_URL)
+                );
     }
 
 }

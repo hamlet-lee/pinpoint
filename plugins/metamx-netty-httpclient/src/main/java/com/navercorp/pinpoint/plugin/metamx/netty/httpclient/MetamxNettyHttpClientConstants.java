@@ -16,6 +16,8 @@ package com.navercorp.pinpoint.plugin.metamx.netty.httpclient; /**
 import com.navercorp.pinpoint.common.trace.ServiceType;
 import com.navercorp.pinpoint.common.trace.ServiceTypeFactory;
 
+import static com.navercorp.pinpoint.common.trace.ServiceTypeProperty.RECORD_STATISTICS;
+
 /**
  * @author hamlet-lee
  *
@@ -26,5 +28,6 @@ public final class MetamxNettyHttpClientConstants {
 
     public static final ServiceType SERVICE_TYPE = ServiceTypeFactory.of(9900,
             "METAMX-HTTP",
-            "METAMX-NETTY-HTTPCLIENT");
+            "METAMX-NETTY-HTTPCLIENT",
+            RECORD_STATISTICS);
 }
