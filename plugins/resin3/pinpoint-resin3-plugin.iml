@@ -10,5 +10,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="pinpoint-bootstrap-core" />
+    <orderEntry type="module" module-name="pinpoint-commons" />
   </component>
 </module>
