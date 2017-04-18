@@ -42,7 +42,8 @@
         <module>logback</module>
         <module>dubbo</module>
         <module>cassandra</module>
-    </modules>
+        <module>resin3</module>
+     </modules>
 
     <dependencies>
         <dependency>
@@ -193,6 +194,11 @@
         <dependency>
             <groupId>com.navercorp.pinpoint</groupId>
             <artifactId>pinpoint-dubbo-plugin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+	<dependency>
+            <groupId>com.navercorp.pinpoint</groupId>
+            <artifactId>pinpoint-resin3-plugin</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
